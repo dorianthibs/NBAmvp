@@ -1,4 +1,4 @@
-"""Lancer avec :  streamlit run app.py"""
+
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -10,22 +10,21 @@ st.set_page_config(page_title="NBA MVP Race 2026", layout="wide")
 
 GREEN, RED, GREY, ORANGE = "#2e9e5b", "#d64545", "#9aa3ad", "#f58426"
 
+
 @st.cache_data(ttl=3600, show_spinner="Chargement des données NBA…")
 def get_data(season: str) -> pd.DataFrame:
     return prepare(load_data(season), season)
 
-
-st.sidebar.title("NBA MVP Race")
-st.sidebar.caption(f"Saison {SEASON} · stats ramenées à {BASE_MIN} min")
-SEASON = st.sidebar.selectbox("📅 Saison", all_seasons(), index=0)
+st.sidebar.title(" NBA MVP Race")
+SEASON = st.sidebar.selectbox(" Saison", all_seasons(), index=0)
 st.sidebar.caption(f"Stats ramenées à {BASE_MIN} min")
 df = get_data(SEASON)
 names = sorted(df["PLAYER_NAME"].unique())
 top = df[df["is_candidate"]].sort_values("PTS", ascending=False)["PLAYER_NAME"].tolist()
 default = names.index(top[0]) if top else 0
-player = st.sidebar.selectbox("Rechercher un joueur )", names,
-                              index=default, key=f"player_{SEASON}")
-if st.sidebar.button("Rafraîchir les données"):
+player = st.sidebar.selectbox(" Rechercher un joueur (tape son nom)", names, index=default,
+                              key=f"player_{SEASON}")
+if st.sidebar.button("🔄 Rafraîchir les données"):
     load_data(SEASON, force=True)
     st.cache_data.clear()
     st.rerun()
@@ -62,9 +61,8 @@ def radar(players: list[str]):
 
 tab1, tab2 = st.tabs([" Profil joueur", " Comparateur MVP"])
 
-# ---------- Onglet 1 : profil ----------
 with tab1:
-    st.header(player)
+    st.header(f"{player} — {SEASON}")
     st.caption(f"{row['TEAM_ABBREVIATION']} · {int(row['GP'])} matchs · {row['MIN']:.1f} min/match")
     c = st.columns(4)
     c[0].metric("Points /36", row["PTS_36"], f"{row['PTS']:.1f} /match", delta_color="off")
@@ -78,27 +76,24 @@ with tab1:
         st.plotly_chart(radar([player]), use_container_width=True)
         best, worst = strengths_weaknesses(row)
 
-        st.subheader("3 domaines où il excelle")
+        st.subheader(" 3 domaines où il excelle")
         for col_ui, m in zip(st.columns(3), best):
             col_ui.plotly_chart(metric_bar(m, GREEN), use_container_width=True)
 
         st.subheader(" 3 domaines où il est moins bon")
         for col_ui, m in zip(st.columns(3), worst):
             col_ui.plotly_chart(metric_bar(m, RED), use_container_width=True)
-        st.caption("Percentiles calculés sur les joueurs ayant ≥ 20 matchs et ≥ 20 min/match. "
+        st.caption(f"Percentiles calculés sur les joueurs ayant ≥ {df.attrs.get('min_gp', 20)} matchs et ≥ 20 min/match. "
                    "Pour les balles perdues, moins = mieux.")
 
-# ---------- Onglet 2 : comparateur ----------
 with tab2:
-    st.header("Course au MVP — à volume égal (36 min)")
+    st.header(f"Course au MVP {SEASON} — à volume égal (36 min)")
     available = df[df["is_candidate"]].sort_values("PTS", ascending=False)["PLAYER_NAME"].tolist()
     chosen = st.multiselect("Candidats", available, default=available, key=f"cands_{SEASON}")
     if chosen:
         sub = df[df["PLAYER_NAME"].isin(chosen)]
         table_cols = ["PLAYER_NAME", "GP", "MIN"] + list(METRICS)
         table = sub[table_cols].rename(columns={c: METRICS[c][0] for c in METRICS})
-        st.header(f"{player} — {SEASON}")
-        st.header(f"Course au MVP {SEASON} — à volume égal (36 min)")
         st.dataframe(table.sort_values("Points /36", ascending=False),
                      use_container_width=True, hide_index=True)
 
