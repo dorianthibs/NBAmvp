@@ -58,18 +58,30 @@ def _fetch(season: str) -> pd.DataFrame:
     return _clean(raw)
 
 
+def _find_csv(season: str):
+    """Cherche le CSV dans data/ puis à côté du code (si les fichiers sont à la racine)."""
+    name = f"season_{season}.csv"
+    for folder in (DATA_DIR, Path(__file__).parent):
+        p = folder / name
+        if p.is_file():
+            return p
+    return None
+
+
 def load_data(season: str, force: bool = False) -> pd.DataFrame:
-    """Lit le cache CSV de la saison s'il existe, sinon télécharge."""
-    path = DATA_DIR / f"season_{season}.csv"
-    if path.exists() and not force:
+    path = _find_csv(season)
+    if path is not None and not force:
         return pd.read_csv(path)
     try:
         df = _fetch(season)
-        DATA_DIR.mkdir(exist_ok=True)
-        df.to_csv(path, index=False)
+        try:
+            DATA_DIR.mkdir(exist_ok=True)
+            df.to_csv(DATA_DIR / f"season_{season}.csv", index=False)
+        except OSError:
+            pass   # sauvegarde impossible (ex. 'data' est un fichier) : on continue sans cache
         return df
     except Exception:
-        if path.exists():
+        if path is not None:
             return pd.read_csv(path)
         raise
 
@@ -77,7 +89,7 @@ def load_data(season: str, force: bool = False) -> pd.DataFrame:
 if __name__ == "__main__":
     # Télécharge TOUTES les saisons une fois (pause entre chaque pour ne pas être bloqué)
     for s in all_seasons():
-        if (DATA_DIR / f"season_{s}.csv").exists():
+        if _find_csv(s) is not None:
             continue
         print("Téléchargement", s, flush=True)
         try:
