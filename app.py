@@ -23,9 +23,9 @@ df = get_data(SEASON)
 names = sorted(df["PLAYER_NAME"].unique())
 top = df[df["is_candidate"]].sort_values("PTS", ascending=False)["PLAYER_NAME"].tolist()
 default = names.index(top[0]) if top else 0
-player = st.sidebar.selectbox("🔎 Rechercher un joueur (tape son nom)", names,
+player = st.sidebar.selectbox("Rechercher un joueur )", names,
                               index=default, key=f"player_{SEASON}")
-if st.sidebar.button("🔄 Rafraîchir les données"):
+if st.sidebar.button("Rafraîchir les données"):
     load_data(SEASON, force=True)
     st.cache_data.clear()
     st.rerun()
@@ -60,7 +60,7 @@ def radar(players: list[str]):
     return fig
 
 
-tab1, tab2 = st.tabs(["👤 Profil joueur", "⚔️ Comparateur MVP"])
+tab1, tab2 = st.tabs([" Profil joueur", " Comparateur MVP"])
 
 # ---------- Onglet 1 : profil ----------
 with tab1:
@@ -78,11 +78,11 @@ with tab1:
         st.plotly_chart(radar([player]), use_container_width=True)
         best, worst = strengths_weaknesses(row)
 
-        st.subheader("✅ 3 domaines où il excelle")
+        st.subheader("3 domaines où il excelle")
         for col_ui, m in zip(st.columns(3), best):
             col_ui.plotly_chart(metric_bar(m, GREEN), use_container_width=True)
 
-        st.subheader("⚠️ 3 domaines où il est moins bon")
+        st.subheader(" 3 domaines où il est moins bon")
         for col_ui, m in zip(st.columns(3), worst):
             col_ui.plotly_chart(metric_bar(m, RED), use_container_width=True)
         st.caption("Percentiles calculés sur les joueurs ayant ≥ 20 matchs et ≥ 20 min/match. "
