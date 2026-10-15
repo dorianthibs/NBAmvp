@@ -6,7 +6,7 @@ import streamlit as st
 from data_fetcher import MVP_CANDIDATES, SEASON, load_data
 from analysis import BASE_MIN, METRICS, prepare, strengths_weaknesses
 
-st.set_page_config(page_title="NBA MVP Race 2026", page_icon="🏀", layout="wide")
+st.set_page_config(page_title="NBA MVP Race 2026", layout="wide")
 
 GREEN, RED, GREY, ORANGE = "#2e9e5b", "#d64545", "#9aa3ad", "#f58426"
 
@@ -18,12 +18,12 @@ def get_data() -> pd.DataFrame:
 
 df = get_data()
 
-# ---------- Sidebar ----------
-st.sidebar.title("🏀 NBA MVP Race")
+
+st.sidebar.title("NBA MVP Race")
 st.sidebar.caption(f"Saison {SEASON} · stats ramenées à {BASE_MIN} min")
 names = sorted(df["PLAYER_NAME"].unique())
 default = names.index("Nikola Jokić") if "Nikola Jokić" in names else 0
-player = st.sidebar.selectbox("🔎 Rechercher un joueur (tape son nom)", names, index=default)
+player = st.sidebar.selectbox("Rechercher un joueur ", names, index=default)
 if st.sidebar.button("🔄 Rafraîchir les données"):
     load_data(force=True)
     st.cache_data.clear()
