@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 from nba_api.stats.endpoints import leagueleaders
 
-FIRST_START_YEAR = 1979   # saison 1979-80 : arrivée de la ligne à 3 points
+FIRST_START_YEAR = 1999   # saison 1979-80 : arrivée de la ligne à 3 points
 LAST_START_YEAR = 2025    # saison 2025-26
 DATA_DIR = Path("data")
 
