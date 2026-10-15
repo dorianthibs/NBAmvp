@@ -3,29 +3,30 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from data_fetcher import MVP_CANDIDATES, SEASON, load_data
+from data_fetcher import all_seasons, load_data
 from analysis import BASE_MIN, METRICS, prepare, strengths_weaknesses
 
 st.set_page_config(page_title="NBA MVP Race 2026", layout="wide")
 
 GREEN, RED, GREY, ORANGE = "#2e9e5b", "#d64545", "#9aa3ad", "#f58426"
 
-
 @st.cache_data(ttl=3600, show_spinner="Chargement des données NBA…")
-def get_data() -> pd.DataFrame:
-    return prepare(load_data())
-
-
-df = get_data()
+def get_data(season: str) -> pd.DataFrame:
+    return prepare(load_data(season), season)
 
 
 st.sidebar.title("NBA MVP Race")
 st.sidebar.caption(f"Saison {SEASON} · stats ramenées à {BASE_MIN} min")
+SEASON = st.sidebar.selectbox("📅 Saison", all_seasons(), index=0)
+st.sidebar.caption(f"Stats ramenées à {BASE_MIN} min")
+df = get_data(SEASON)
 names = sorted(df["PLAYER_NAME"].unique())
-default = names.index("Nikola Jokić") if "Nikola Jokić" in names else 0
-player = st.sidebar.selectbox("Rechercher un joueur ", names, index=default)
+top = df[df["is_candidate"]].sort_values("PTS", ascending=False)["PLAYER_NAME"].tolist()
+default = names.index(top[0]) if top else 0
+player = st.sidebar.selectbox("🔎 Rechercher un joueur (tape son nom)", names,
+                              index=default, key=f"player_{SEASON}")
 if st.sidebar.button("🔄 Rafraîchir les données"):
-    load_data(force=True)
+    load_data(SEASON, force=True)
     st.cache_data.clear()
     st.rerun()
 
@@ -90,12 +91,14 @@ with tab1:
 # ---------- Onglet 2 : comparateur ----------
 with tab2:
     st.header("Course au MVP — à volume égal (36 min)")
-    available = [p for p in MVP_CANDIDATES if p in names]
-    chosen = st.multiselect("Candidats", available, default=available)
+    available = df[df["is_candidate"]].sort_values("PTS", ascending=False)["PLAYER_NAME"].tolist()
+    chosen = st.multiselect("Candidats", available, default=available, key=f"cands_{SEASON}")
     if chosen:
         sub = df[df["PLAYER_NAME"].isin(chosen)]
         table_cols = ["PLAYER_NAME", "GP", "MIN"] + list(METRICS)
         table = sub[table_cols].rename(columns={c: METRICS[c][0] for c in METRICS})
+        st.header(f"{player} — {SEASON}")
+        st.header(f"Course au MVP {SEASON} — à volume égal (36 min)")
         st.dataframe(table.sort_values("Points /36", ascending=False),
                      use_container_width=True, hide_index=True)
 
