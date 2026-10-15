@@ -1,5 +1,6 @@
 pandas
 numpy
-nba_api
 streamlit
 plotly
+requests
+lxml
